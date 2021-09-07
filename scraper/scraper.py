@@ -1,58 +1,49 @@
 from bs4 import BeautifulSoup
 import requests 
 from http.cookies import SimpleCookie
+import re
 
-BASE_HEADERS = ({'USer-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'})
+BASE_HEADERS = ({'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'})
 BASE_URL = 'https://www-jstor-org.ezproxy.uct.ac.za/'
 AUTH_COOKIE = ''
 
 # Test URI:
 URI = 'https://www-jstor-org.ezproxy.uct.ac.za/stable/2629139?seq=1'
 
-# do scrapey-scrape
-def conninit(uri):
-    # Parse the cookie string as a SimpleCookie
-    cookie = SimpleCookie()
-    cookie.load(AUTH_COOKIE)
+def parseCookies(cookiestring):
 
-    # Requests API wants a dict for the cookie, so lets generate on from the SimpleCookie
+    # The UCT session cookies have messy formats that http.cookies doesn't like
+    # We have to manually parse - this may be fragile!
+
     cookies = {}
-    for key, morsel in cookie.items():
-        cookies[key] = morsel.value
+    re1 = re.compile(r'(?P<key>[^;=]+)=(?P<val>[^;]*);')
+    csc = re1.findall(cookiestring)
+    for c in re1.finditer(cookiestring):
+        cookies[c.group('key')] = c.group('val')
+
+    return cookies
+
+# do scrapey-scrape
+def conninit(uri, session):
 
     # Send the request
-    r = requests.get(URI, headers = BASE_HEADERS, cookies= cookies)
+    r = session.get(URI, headers = BASE_HEADERS)
 
     # View response
     if r.status_code == 200:
+        #print(r.history[0].content)
         return r.text
     else:
         raise ValueError('Received response code ' + r.response_code)
 
+cookies = parseCookies(AUTH_COOKIE)
 
-# EZProxy may send a redirect request - need to handle that
-def parseinit(text):
-    dom_model = BeautifulSoup(text, 'html.parser')
-    formaction = dom_model.find_all('form', attrs = {'name' : 'EZproxyForm'})
-    relaystate = dom_model.find_all('input', attrs = { 'name' : 'RelayState'})
-    samlreq = dom_model.find_all('input', attrs = { 'name' : 'SAMLRequest'})
+sess = requests.Session()
 
-    if len(formaction) != 1:
-        raise ValueError('Unable to parse EZProxy redirect. Could not find unique EZproxyForm form element in response')
-    if len(relaystate) != 1:
-        raise ValueError('Unable to parse EZProxy redirect. Could not find unique RelayState input element in response')
-    if len(samlreq) != 1:
-        raise ValueError('Unable to parse EZProxy redirect. Could not find unique SAMLRequest input element in response')
+sess.cookies.update(cookies)
 
-    formaction = formaction[0]['action']
-    relaystate = relaystate[0]['value']
-    samlreq = samlreq[0]['value']
+initreq = conninit(URI, sess)
 
-    newreq = requests.post(formaction, data = {'RelayState' : relaystate, 'SAMLRequest': samlreq})
+print(initreq)
 
-    print(newreq.status_code)
-    print(newreq.text)
-
-
-initreq = conninit(URI)
-ezl = parseinit(initreq)
+sess.close()
