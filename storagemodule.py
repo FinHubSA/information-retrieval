@@ -14,33 +14,21 @@ os.mkdir(aronspath)# need to do some conditional statements here if the director
 os.chdir(aronspath)#change path to this directory 
 mainpath=os.getcwd()#fetches user's working directory 
 
- 
-directory1='Staging'
-stagingpath=os.path.join(mainpath,directory1) # staging directory path 
-
 #Could make this a function so its a bit cleaner ? 
-# Create the directory 
-# 'Staging'
+# Create the sub-directory Staging
+stagingpath=os.path.join(mainpath,'Staging') # staging directory path 
 try: 
     os.mkdir(stagingpath)
 except OSError as error: 
     print(error) #Should include something else here to do if there is an error ? Maybe prompt user to rename the directory they have with the same name 
- 
-        
-directory="Storage"
-storagepath = os.path.join(mainpath,directory)#Sotrage path - will be replaced later once connected to database 
+  
+storagepath = os.path.join(mainpath,"Storage")#Sotrage path - will be replaced later once connected to database 
 
 try: 
     os.mkdir(storagepath) 
 except OSError as error: 
     print(error) 
-    try:
-        directory='Storage 2' #if there is already staging use staging 2.
-        path = os.path.join(path,directory)
-        os.mkdir(storagepath)
-    except OSError as error:
-        print(error)
-        
+         
  #This is where it will then scrape and move files into staging 
  #Then we will check files against the database, so a query would go here 
  #Then if they meet a condition we move them across 
