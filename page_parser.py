@@ -30,10 +30,3 @@ def parse_page(response):
     )
     return articles
 
-
-# To test - downloaded the <html> element off the page below and run the following
-# https://www.jstor.org/action/doBasicSearch?Query=pt%3A%28Econometrica%29
-
-# soup = BeautifulSoup(open('/Users/myhome/Documents/work/FinLab/Fintech Student Project/Info scrape experiment/JSTOR_ Search Results.html'), 'html.parser')
-# articles = parse_page(soup)
-# print(articles)
