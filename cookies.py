@@ -1,8 +1,11 @@
 import pickle
 import pprint
-import time
 
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from time import sleep
+
+
 
 ## Using selenium to bypass JSTOR Login 
 
@@ -41,5 +44,19 @@ def delete_cookies(driver, domains=None):
         driver.delete_all_cookies()
 
 
+
 # Path where you want to save/load cookies to/from 
-cookies_location = "C:\Users\User\Desktop\MPhil\chrome\chromedriver\cookies.txt"
+cookies_location = "C:/Users/User/Desktop/MPhil/chrome/chromedriver/cookies.txt"
+
+username= "" # provide uct email studentNo@myuct.ac.za
+password="" #uct vula password
+
+
+driver = webdriver.Chrome(ChromeDriverManager().install())
+driver.get('https://www-jstor-org.ezproxy.uct.ac.za')
+
+ 
+driver.find_element_by_xpath(".//input[@id='userNameInput']").send_keys(username)
+driver.find_element_by_xpath(".//input[@id='passwordInput']").send_keys(password)
+driver.find_element_by_xpath(".//span[@id='submitButton']").click()
+sleep(3)
