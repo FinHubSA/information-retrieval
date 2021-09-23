@@ -1,14 +1,22 @@
-from math import log
-from bs4 import BeautifulSoup
-import requests 
-from http.cookies import SimpleCookie
+from selenium.common.exceptions import ErrorInResponseException, TimeoutException
 import re
-import bibtexparser
-import ast
-from typing import Callable
-from pathlib import Path
+from math import log
 from random import random
 from time import sleep
+from typing import Callable
+from pathlib import Path
+from http.cookies import SimpleCookie
+
+import requests 
+#from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
+from webdriver_manager.driver import ChromeDriver
+
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'
+
 
 class JstorArticle:
     """This class encapsulates the metadata and actual article downloaded from JSTOR
@@ -43,7 +51,7 @@ class JstorScraper:
     """Provides an interface to download an article and its metadata from JSTOR given a valid session
 
     Args:
-        * web_session (requests.Session) : Existing authenticated session (through proxy if needed) to use for scraping JSTOR.
+        * driver (selenium.webdriver) : Existing authenticated webdriver instance 
         * rewrite_rule: (Callable[[str], str]) : Optional callable providing a way to rewrite URIs if necessary for proxy etc.
         * base_url (str, optional) : Base URL which requests will be made relative to. Defaults to `https://www.jstor.org`.
         * preview_path (str, optional) : URL relative to base_url for article description/preview. Defaults to `/stable/`.
@@ -58,7 +66,7 @@ class JstorScraper:
             - 3: Verbose logging (not yet implemented)
     """
 
-    _session : requests.Session = None
+    _driver : webdriver.Chrome = None
 
     _rewrite_rule : Callable[[str], str] = None
 
@@ -75,7 +83,7 @@ class JstorScraper:
     _log_level : int = 1
 
     def __init__(self, 
-                 web_session: requests.Session, 
+                 driver: webdriver, 
                  rewrite_rule: Callable[[str], str] = None, 
                  base_url: str = 'https://www.jstor.org',
                  preview_path: str = '/stable/',
@@ -86,7 +94,7 @@ class JstorScraper:
 
         # Populate private attributes:                 
 
-        self._session = web_session
+        self._driver = driver
 
         self._base_url = base_url 
 
@@ -116,11 +124,13 @@ class JstorScraper:
         sleep(n_seconds)
 
     # Loads JSTOR page and finds link to download PDF
-    def get_payload_data(self, document_id: int) -> JstorArticle:
+    def get_payload_data(self, document_id: int, request_timeout: int = 10) -> JstorArticle:
         """Obtain download link and metadata for a given article on JSTOR
 
         Args:
             * document_id (int): The JSTOR document ID to process
+            * request_timeout (int, optional): Length of time to wait 
+              for requests to successfully complete
 
         Raises:
             ValueError: If JSTOR returns an unexpected response to requests
@@ -137,76 +147,94 @@ class JstorScraper:
 
         if self._log_level > 0:
             print(f'Performing GET request for article landing page at {view_uri}', end = '\r')
-        page_request = self._session.get(view_uri)
+        #page_request = self._session.get(view_uri)
+        self._driver.get(view_uri)
 
-        # View response
-        if page_request.status_code != 200:
-            print(page_request.text)
-            raise ValueError(f'Received response code {page_request.status_code}')
+        # Load article landing page
+        try:
+            WebDriverWait(self._driver, request_timeout).until(
+                expected_conditions.visibility_of_element_located((By.ID, 'page-scan-wrapper'))
+            )
+        except:
+            print('Unable to load article landing page')
+            raise
 
-        # Build DOM model and find CSRF token
-        view_page_soup = BeautifulSoup(page_request.content, 'html.parser')
-
-        cookie_div = view_page_soup.find('div', attrs = {'id': 'csrfTokenCookie', 'class': 'hide'})
-
-        csrf_token = cookie_div.find('input', attrs = {'name': 'csrfmiddlewaretoken'})['value']
-        
-        self._session.cookies.set('csrftoken', 
-                                  csrf_token, 
-                                  domain = self._rewrite_rule(self._base_url), 
-                                  path = '/',
-                                  discard = True)
-
-        # Download article metadata
-        # We don't need to wait for this because the browser will load it without delay anyway
-        meta_uri = self._rewrite_rule(f'{self._base_url}{self._meta_path}{document_id}')
-
-        if self._log_level > 0:
-            print(f'Performing GET request for article metadata at {meta_uri}', end = '\r')
-
-        meta_request = self._session.get(meta_uri)
-
-        jstor_metadata = meta_request.text
+        # Pull article metadata from DOM
+        # JSTOR (currently) use vuejs framework
+        # We can use that to pull what the page already downloaded.
+        # This should make activity more human-like
+        metadata = self._driver.execute_script(
+            '''return document.
+                        getElementsByClassName('abstract-container')[0].
+                        __vue__.$store.state.
+                        content.contentData;'''
+            )
 
         # Now try download the pdf
-        pdf_uri = self._rewrite_rule(f'{self._base_url}{self._pdf_path}{document_id}.pdf')
+        # First find download button and download link
+        pdf_button = self._driver.find_element_by_xpath('//a[@data-qa="download-pdf"]')
+        pdf_path = pdf_button.get_attribute('href')
+
+        # Get T&C state
+        tc_state = self._driver.execute_script(
+            '''return document.
+                        getElementsByClassName('abstract-container')[0].
+                        __vue__.$store.state.
+                        user.termsAndConditionsAccepted;'''
+            )
 
         self._wait_before_request()
 
-        if self._log_level > 0:
-            print(f'Performing GET request for article pdf at {pdf_uri}', end = '\r')
+        pdf_button.click()
 
-        pdf_request = self._session.get(pdf_uri)
+        # Get handle to current set of tabs
+        tab_list = self._driver.window_handles
+        num_tabs = len(tab_list)
+        cur_tab = self._driver.current_window_handle
 
-        # JSTOR may ask us to request terms and conditions - have to send a new request accepting them
-        if re.match(r'text/html', pdf_request.headers['content-type']):
-
-            pdf_page_soup = BeautifulSoup(pdf_request.content, 'html.parser')
-
-            accept_form = pdf_page_soup.find('form', attrs = {'method': 'POST', 'action': re.compile(r'/tc/verify')})
-
-            csrf_token = accept_form.find('input', attrs = {'name': 'csrfmiddlewaretoken'})['value']
-        
-            self._session.cookies.set('csrftoken', 
-                                    csrf_token, 
-                                    domain = self._rewrite_rule(self._base_url), 
-                                    path = '/',
-                                    discard = True)
-
-            pdf_request_payload = {'csrfmiddlewaretoken' : csrf_token}
-
-            # Update URI according to action from prior request
-            pdf_uri = self._rewrite_rule(f'{self._base_url}{accept_form["action"]}')
-
-            if self._log_level > 0:
-                print(f'JSTOR returned T&C page. Performing POST request for article pdf at {pdf_uri}', end = '\r')
+        # If T&C haven't already been accepted, modal will show up:
+        if not tc_state:
+            accept_button = self._driver.find_element_by_xpath('//pharos-button[@data-qa="accept-terms-and-conditions-button"]')
 
             self._wait_before_request()
 
-            pdf_request = self._session.post(pdf_uri, data = pdf_request_payload)
+            accept_button.click()
 
-        # Do a final check that we have apparently received a pdf as expected.
+        # Now it will try to open new tab with pdf.
+        try:
+            WebDriverWait(self._driver, 5).until(
+                expected_conditions.new_window_is_opened(num_tabs)
+            )
+        except TimeoutException as e:
+            raise TimeoutException("Didn't detect a pdf window opening") from e
+
+        # Close the new tab 
+        # We will try rather use requests to download the pdf otherwise no way to save
+        self._driver.close()
+
+        # Make sure we are back on the original tab
+        self._driver.switch_to.window(cur_tab)
+
+        # Get cookies to use for requests
+        selenium_cookies = self._driver.get_cookies()
+
+        session = requests.Session()
+
+        with session as s:
+
+            s.headers['User-Agent'] = USER_AGENT
+
+            s.cookies.update(selenium_cookies)
+
+            pdf_request = s.get(pdf_path)
+
+        if pdf_request.status_code != 200:
+            raise ErrorInResponseException(f'''Could not successfully download PDF
+                                               Status code was {pdf_request.status_code}
+                                            ''')
         if pdf_request.headers['content-type'] != 'application/pdf':
-            raise ValueError(f'JSTOR did not return a pdf when expected - got response MIME content type of {pdf_request.headers["content-type"]}')
+            raise ErrorInResponseException(f'''Could not successfully download PDF
+                                               Response content-type was {pdf_request.headers['content-type']}
+                                            ''')
 
-        return JstorArticle(jstor_metadata, pdf_request.content)
+        return JstorArticle(metadata, pdf_request.content)
