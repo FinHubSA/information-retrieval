@@ -129,16 +129,16 @@ class JstorScraper:
         """Obtain metadata and download links for articles a given journal name and number of articles
         
         Args:  
-            * journal_name (str): The name of the journla to search 
+            * journal_name (str): The name of the journal to search 
             * request_timeout (int, optional): Length of time to wait 
              for requests to successfully complete
-            * number_articles (int): Number of search results to scrape 
+
              
         Raises:
             ValueError: If JSTOR returns an unexpected response to requests
             
         Returns:
-            dict: Articles metadata 
+            dataframe: Articles metadata 
         
         """
         view_uri = self._rewrite_rule(f'{self._base_url}')
