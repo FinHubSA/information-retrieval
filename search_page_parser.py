@@ -6,11 +6,15 @@ from time import sleep
 from page_parser import parse_search_page
 from bs4 import BeautifulSoup
 from getpass import getpass
+from random import choice 
 
 
-username = input("Enter your UCT username: ") # provide uct email studentNo@myuct.ac.za
-password= getpass()                           #uct vula password
-journal_name= input("Enter the journal name: ")
+#username = input("Enter your UCT username: ") # provide uct email studentNo@myuct.ac.za
+#password= getpass()                           #uct vula password
+#journal_name= input("Enter the journal name: ")
+#journal_name= choice() 
+
+
 
 journal = "pt:("+ journal_name + ")"
 
@@ -43,5 +47,5 @@ def scrape_single_search_page(username, password, journal):
 # -------------------------------------------- #
 #to run, uncomment the code below
 
-#articles = scrape_single_search_page(username, password, journal)
-#del password
+articles = scrape_single_search_page(username, password, journal)
+del password

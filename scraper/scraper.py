@@ -8,7 +8,8 @@ from pathlib import Path
 from http.cookies import SimpleCookie
 
 import requests 
-#from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup
+from page_parser import parse_search_page
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -73,6 +74,7 @@ class JstorScraper:
     _base_url : str = None
 
     _prev_path : str = None
+    
 
     _pdf_path : str = None 
 
@@ -122,7 +124,57 @@ class JstorScraper:
             print(f'Waiting {n_seconds:.1f}s before next request', end = '\r')
 
         sleep(n_seconds)
+        
+    def get_search_results(self, journal_name: str, request_timeout: int=10):
+        """Obtain metadata and download links for articles a given journal name and number of articles
+        
+        Args:  
+            * journal_name (str): The name of the journla to search 
+            * request_timeout (int, optional): Length of time to wait 
+             for requests to successfully complete
+            * number_articles (int): Number of search results to scrape 
+             
+        Raises:
+            ValueError: If JSTOR returns an unexpected response to requests
+            
+        Returns:
+            dict: Articles metadata 
+        
+        """
+        view_uri = self._rewrite_rule(f'{self._base_url}')
+        
+        journal = "pt:("+ journal_name + ")"
 
+        # Send the request
+        self._wait_before_request()
+
+        if self._log_level > 0:
+            print(f'Performing GET request for search landing page at {view_uri}', end = '\r')
+        #page_request = self._session.get(view_uri)
+        self._driver.get(view_uri)
+        
+        '''try:
+            WebDriverWait(self._driver, request_timeout).until(
+                expected_conditions.visibility_of_element_located((By.ID, 'page-scan-wrapper'))
+            )
+        except:
+            print('Unable to load search landing page')
+            raise'''
+
+        # Now try scrape the webpage 
+        # First fill out search bar then find download button search
+        search_bar= self._driver.find_element_by_xpath(".//input[@id='query-builder-input']")
+        search_button = self._driver.find_element_by_xpath(".//button[@title='search button']")
+        
+        search_bar.send_keys(journal) 
+        self._wait_before_request()
+        search_button.click()
+        self._wait_before_request()
+        soup = BeautifulSoup(self._driver.page_source)
+        articles = parse_search_page(soup)
+        
+        return articles
+        
     # Loads JSTOR page and finds link to download PDF
     def get_payload_data(self, document_id: int, request_timeout: int = 10) -> JstorArticle:
         """Obtain download link and metadata for a given article on JSTOR

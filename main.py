@@ -108,6 +108,8 @@ web_session = init_session(webdriver.Chrome(ChromeDriverManager().install(), opt
 
 the_scraper = JstorScraper(web_session, uct_rewrite)
 
-initreq = the_scraper.get_payload_data(PAPER_ID)
+initreq = the_scraper.get_search_results(journal_name="Econometrica")
 
-initreq.save_pdf(Path(OUT_FILE))
+#initreq = the_scraper.get_payload_data(PAPER_ID)
+
+#initreq.save_pdf(Path(OUT_FILE))
