@@ -167,10 +167,10 @@ class JstorScraper:
         search_button = self._driver.find_element_by_xpath(".//button[@title='search button']")
         
         search_bar.send_keys(journal) 
-        self._wait_before_request()
         search_button.click()
         self._wait_before_request()
         soup = BeautifulSoup(self._driver.page_source)
+        self._wait_before_request()
         articles = parse_search_page(soup)
         
         return articles
