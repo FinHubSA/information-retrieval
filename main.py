@@ -22,17 +22,6 @@ OUT_FILE = r'F:\woo.pdf'
 
 DEFAULT_TIMEOUT = 10
 
-def random_journal()-> str:
-    with open(r'masterlist.json','r') as jsonfile:
-        json_data = json.load(jsonfile)
-        print(json_data)
-        jsonfile.close()
-
-    journals = json_data['Journal Name ']
-    print(journals)
-    journal=journals[1]
-    return(journal)
-
 # Converts a request's cookie string into a dictionary that we can use with requests.
 def parse_cookies(cookiestring: str) -> dict:
 
@@ -118,10 +107,9 @@ web_session = init_session(webdriver.Chrome(ChromeDriverManager().install(), opt
                             logon_deets['pass'],
                             uct_rewrite)
 
-#the_scraper = JstorScraper(web_session, uct_rewrite)
+the_scraper = JstorScraper(web_session, uct_rewrite)
 
-
-#initreq = the_scraper.get_search_results(journal_name="Econometrica")
+initreq = the_scraper.get_search_results(journal_name="Econometrica")
 
 #initreq = the_scraper.get_payload_data(PAPER_ID)
 
