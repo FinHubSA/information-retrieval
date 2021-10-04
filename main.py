@@ -1,3 +1,4 @@
+
 import re
 import json
 from pathlib import Path
@@ -14,6 +15,7 @@ import scraper
 from scraper.scraper import JstorScraper
 
 
+
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'
 
 PAPER_ID = '2629139'
@@ -22,16 +24,6 @@ OUT_FILE = r'F:\woo.pdf'
 
 DEFAULT_TIMEOUT = 10
 
-def random_journal()-> str:
-    with open(r'masterlist.json','r') as jsonfile:
-        json_data = json.load(jsonfile)
-        print(json_data)
-        jsonfile.close()
-
-    journals = json_data['Journal Name ']
-    print(journals)
-    journal=journals[1]
-    return(journal)
 
 # Converts a request's cookie string into a dictionary that we can use with requests.
 def parse_cookies(cookiestring: str) -> dict:
@@ -94,10 +86,12 @@ def init_session(driver: webdriver, host: str, user: str, pw: str, rewrite_rule:
 
 
 
+
 # --------------------------------------------------
 # Code that runs test: 
 
 #print(uct_rewrite(test_uri))
+
 
 
 chrome_options = webdriver.ChromeOptions()
@@ -126,3 +120,4 @@ web_session = init_session(webdriver.Chrome(ChromeDriverManager().install(), opt
 #initreq = the_scraper.get_payload_data(PAPER_ID)
 
 #initreq.save_pdf(Path(OUT_FILE))
+

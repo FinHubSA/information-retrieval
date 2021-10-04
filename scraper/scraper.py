@@ -1,5 +1,6 @@
 from selenium.common.exceptions import ErrorInResponseException, TimeoutException
 import re
+
 from math import log
 from random import random
 from time import sleep
