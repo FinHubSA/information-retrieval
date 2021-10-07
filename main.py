@@ -109,7 +109,8 @@ web_session = init_session(webdriver.Chrome(ChromeDriverManager().install(), opt
 
 the_scraper = JstorScraper(web_session, uct_rewrite)
 
-initreq = the_scraper.get_search_results(journal_name="Econometrica")
+articles = the_scraper.get_search_results(journal_name="Econometrica")
+#test=the_scraper.get_multi_payload_data(document_ids={1,2,3,4,5,5,7,8,4,2})
 
 #initreq = the_scraper.get_payload_data(PAPER_ID)
 
