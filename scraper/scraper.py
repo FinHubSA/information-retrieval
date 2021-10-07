@@ -23,6 +23,14 @@ from webdriver_manager.driver import ChromeDriver
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'
 
 
+class SearchResponse:
+    doi: str
+    url: str
+
+    def __init__(self, doi, url):
+        self.doi = doi
+        self.url = url
+
 class JstorArticle:
     """This class encapsulates the metadata and actual article downloaded from JSTOR
 
@@ -132,8 +140,25 @@ class JstorScraper:
             print(f'Waiting {n_seconds:.1f}s before next request', end = '\r')
 
         sleep(n_seconds)
+
+    def _parse_search_page_lite(self, response: BeautifulSoup) -> list[SearchResponse]:
+
+        result_list: list[SearchResponse] = []
+
+        results_list = [
+            SearchResponse(
+                dl_button['data-doi'],
+                dl_button['href']
+            ) 
+                for dl_button in response.select('.pdfLink') 
+                if dl_button['href'] != None 
+                    and dl_button['data_doi'] != None
+            ]
         
-    def parse_search_page(response):
+        return results_list
+
+        
+    def _parse_search_page(self, response):
         article_titles_list = []
         article_titles = response.select('.link-no-underline')
         for title in article_titles:
@@ -176,7 +201,18 @@ class JstorScraper:
             full_url = 'https://www.jstor.org/' + target_url
             article_url_list.append(full_url)  
             
-        articles = pd.DataFrame(list(zip(article_titles_list, article_author_list, article_journal_name_list, article_volume_list ,article_journal_date_list , article_pages_in_journal_list ,  article_url_list)), columns=['Title',"Author",'Journal', 'Journal Volume','Journal Date Published','Article Pages', 'URL'])
+        articles = pd.DataFrame(
+            list(
+                zip(
+                    article_titles_list, 
+                    article_author_list, 
+                    article_journal_name_list, 
+                    article_volume_list, 
+                    article_journal_date_list, 
+                    article_pages_in_journal_list,
+                    article_url_list)), 
+                columns = ['Title',
+                           'Author','Journal', 'Journal Volume','Journal Date Published','Article Pages', 'URL'])
         return articles
     
         
@@ -200,33 +236,62 @@ class JstorScraper:
         
         journal = "pt:("+ journal_name + ")"
 
-        # Send the request
-        self._wait_before_request()
-
-        if self._log_level > 0:
-            print(f'Performing GET request for search landing page at {view_uri}', end = '\r')
-        #page_request = self._session.get(view_uri)
-        self._driver.get(view_uri)
-        
-        '''try:
-            WebDriverWait(self._driver, request_timeout).until(
-                expected_conditions.visibility_of_element_located((By.ID, 'page-scan-wrapper'))
-            )
-        except:
-            print('Unable to load search landing page')
-            raise'''
-
+        # If session just started we will already be on landing page, so don't reload it.
         # Now try scrape the webpage 
         # First fill out search bar then find download button search
-        search_bar= self._driver.find_element_by_xpath(".//input[@id='query-builder-input']")
+
+        search_bar = self._driver.find_element_by_xpath(".//input[@id='query-builder-input']")
         search_button = self._driver.find_element_by_xpath(".//button[@title='search button']")
         
+        # If we can't find the search bar we can try load instead
+        if search_bar == None or search_button == None:
+
+            if self._log_level > 0:
+                print(f'Performing GET request for search landing page at {view_uri}', end = '\r')
+            #page_request = self._session.get(view_uri)
+            
+            # Send the request
+            self._wait_before_request()
+            self._driver.get(view_uri)
+
+            try:
+                WebDriverWait(self._driver, 5).until(
+                    expected_conditions.visibility_of_element_located(
+                        (By.XPATH, ".//input[@id='query-builder-input'")
+                    )
+                )
+            except TimeoutException as e:
+                raise TimeoutException("Seem to be unable to load JSTOR landing page") from e
+
+
+            # And now try again...
+            search_bar = self._driver.find_element_by_xpath(".//input[@id='query-builder-input']")
+            search_button = self._driver.find_element_by_xpath(".//button[@title='search button']")
+
+            # If they're still not around we have a problem.
+            if search_bar == None or search_button == None:
+                raise Exception("Unable to find search elements on JSTOR landing page")
+        
+
+        self._wait_before_request()
         search_bar.send_keys(journal) 
         search_button.click()
-        self._wait_before_request()
+
+        try:
+            WebDriverWait(self._driver, 10).until(
+                expected_conditions.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        '//a[@class = "link-no-underline" and @data-itemtype]'
+                    )
+                )
+            )
+        except TimeoutException as e:
+            raise TimeoutException("Search results didn't load within expected timeframe") from e
+            
         soup = BeautifulSoup(self._driver.page_source, 'html.parser')
-        self._wait_before_request()
-        articles = self.parse_search_page(soup)
+        
+        articles = self._parse_search_page_lite(soup)
         
         return articles
         
@@ -272,7 +337,7 @@ class JstorScraper:
         # This should make activity more human-like
         metadata = self._driver.execute_script(
             '''return document.
-                        getElementsByClassName('abstract-container')[0].
+                        getElementById('page-scan-info').
                         __vue__.$store.state.
                         content.contentData;'''
             )
