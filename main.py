@@ -1,3 +1,4 @@
+
 import re
 import json
 from pathlib import Path
@@ -12,6 +13,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 import scraper
 from scraper.scraper import JstorScraper
+
 
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'
@@ -83,10 +85,12 @@ def init_session(driver: webdriver, host: str, user: str, pw: str, rewrite_rule:
 
 
 
+
 # --------------------------------------------------
 # Code that runs test: 
 
 #print(uct_rewrite(test_uri))
+
 
 
 chrome_options = webdriver.ChromeOptions()
@@ -115,3 +119,4 @@ articles = the_scraper.get_search_results(journal_name="Econometrica")
 #initreq = the_scraper.get_payload_data(PAPER_ID)
 
 #initreq.save_pdf(Path(OUT_FILE))
+
