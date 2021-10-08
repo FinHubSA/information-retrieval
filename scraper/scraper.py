@@ -289,7 +289,6 @@ class JstorScraper:
             raise TimeoutException("Search results didn't load within expected timeframe") from e
             
         soup = BeautifulSoup(self._driver.page_source, 'html.parser')
-        
         articles = self._parse_search_page_lite(soup)
         
         return articles
