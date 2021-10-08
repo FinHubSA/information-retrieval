@@ -133,7 +133,7 @@ class JstorScraper:
 
         sleep(n_seconds)
         
-    def parse_search_page(response):
+    def _parse_search_page(response):
         article_titles_list = []
         article_titles = response.select('.link-no-underline')
         for title in article_titles:
@@ -226,7 +226,7 @@ class JstorScraper:
         self._wait_before_request()
         soup = BeautifulSoup(self._driver.page_source, 'html.parser')
         self._wait_before_request()
-        articles = self.parse_search_page(soup)
+        articles = self._parse_search_page(soup)
         
         return articles
         
