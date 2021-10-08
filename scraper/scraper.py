@@ -143,7 +143,7 @@ class JstorScraper:
 
     def _parse_search_page_lite(self, response: BeautifulSoup) -> list[SearchResponse]:
 
-        result_list: list[SearchResponse] = []
+        results_list: list[SearchResponse] = []
 
         results_list = [
             SearchResponse(
@@ -151,8 +151,7 @@ class JstorScraper:
                 dl_button['href']
             ) 
                 for dl_button in response.select('.pdfLink') 
-                if dl_button['href'] != None 
-                    and dl_button['data_doi'] != None
+                if 'href' in dl_button and 'data-doi' in dl_button 
             ]
         
         return results_list
