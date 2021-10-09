@@ -26,10 +26,22 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 class SearchResponse:
     doi: str
     url: str
+    docid: str
 
     def __init__(self, doi, url):
         self.doi = doi
         self.url = url
+        self.docid = re.sub(
+            r'/stable/(?:pdf/)?(?P<id>[a-z0-9]+)\.[a-z0-9]{1,4}(?:\?.+)?', 
+            r'\g<id>',
+            url
+        )
+
+    def __str__(self):
+        return f'SearchResponse Object: {{ Article ID: {self.docid}; DOI: {self.doi}; URL: {self.url} }}'
+
+    def __repr__(self):
+        return f"SearchResponse('{self.doi}', '{self.url}')"
 
 class JstorArticle:
     """This class encapsulates the metadata and actual article downloaded from JSTOR
@@ -141,7 +153,7 @@ class JstorScraper:
 
         sleep(n_seconds)
 
-    def _parse_search_page_lite(self, response: BeautifulSoup) -> list[SearchResponse]:
+    def _parse_search_page_lite(response: BeautifulSoup) -> list[SearchResponse]:
 
         results_list: list[SearchResponse] = []
 
@@ -151,7 +163,7 @@ class JstorScraper:
                 dl_button['href']
             ) 
                 for dl_button in response.select('.pdfLink') 
-                if 'href' in dl_button and 'data-doi' in dl_button 
+                if 'href' in dl_button.attrs and 'data-doi' in dl_button.attrs
             ]
         
         return results_list
@@ -294,7 +306,7 @@ class JstorScraper:
         return articles
         
     # Loads JSTOR page and finds link to download PDF
-    def get_payload_data(self, document_id: int, request_timeout: int = 10) -> JstorArticle:
+    def get_payload_data(self, document_id: str, request_timeout: int = 10) -> JstorArticle:
         """Obtain download link and metadata for a given article on JSTOR
 
         Args:
@@ -411,7 +423,7 @@ class JstorScraper:
 
     
     # Loads JSTOR pages and finds link to download PDF
-    def get_multi_payload_data(self, document_ids: int, request_timeout: int = 10)-> JstorArticle: 
+    def get_multi_payload_data(self, document_ids: list[str], request_timeout: int = 10)-> JstorArticle: 
         """Obtain download link and metadata for a given article on JSTOR
 
         Args:
