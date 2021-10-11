@@ -152,7 +152,7 @@ class JstorScraper:
 
         sleep(n_seconds)
 
-    def _parse_search_page_lite(response: BeautifulSoup) -> list[SearchResponse]:
+    def _parse_search_page_lite(response: BeautifulSoup) -> 'list[SearchResponse]':
 
         results_list: list[SearchResponse] = []
 
@@ -167,65 +167,6 @@ class JstorScraper:
         
         return results_list
 
-        
-    def _parse_search_page(self, response):
-        article_titles_list = []
-        article_titles = response.select('.link-no-underline')
-        for title in article_titles:
-            article_titles_list.append(title.text)
-            
-        article_author_list = []
-        article_author = response.select('.contrib')
-        for author in article_author:
-            article_author_list.append(author.text)
-        
-        journal = response.select('.metadata') 
-        article_journal_name_list = []
-        article_volume_list = []
-        article_journal_date_list = []
-        article_pages_in_journal_list = []
-        for article in journal:
-            s = article.text
-            #get journal date published
-            target_date = s.split("(")[1].split(")")[0]
-            article_journal_date_list.append(target_date)
-            
-            #get article journal full name
-            target_name = s.split(",")[0]
-            article_journal_name_list.append(target_name)
-            
-            #get article journal volume
-            target_volume = s.split(",")[1].split("(")[0]
-            article_volume_list.append(target_volume)
-            
-            #get article pages in journal
-            target_pages = str(s.split("),")[1:])
-            article_pages_in_journal_list.append(target_pages[2:-2])
-            
-            
-        article_urls = response.select('.pdfLink')
-        article_url_list = []
-        for url in article_urls:
-            s = url['href']
-            target_url = s.split("?")[0]
-            full_url = 'https://www.jstor.org/' + target_url
-            article_url_list.append(full_url)  
-            
-        articles = pd.DataFrame(
-            list(
-                zip(
-                    article_titles_list, 
-                    article_author_list, 
-                    article_journal_name_list, 
-                    article_volume_list, 
-                    article_journal_date_list, 
-                    article_pages_in_journal_list,
-                    article_url_list)), 
-                columns = ['Title',
-                           'Author','Journal', 'Journal Volume','Journal Date Published','Article Pages', 'URL'])
-        return articles
-    
-        
     def get_search_results(self, journal_name: str, request_timeout: int=10):
         """Obtain metadata and download links for articles a given journal name and number of articles
         
@@ -422,7 +363,7 @@ class JstorScraper:
 
     
     # Loads JSTOR pages and finds link to download PDF
-    def get_multi_payload_data(self, document_ids: list[str], request_timeout: int = 10)-> JstorArticle: 
+    def get_multi_payload_data(self, document_ids: 'list[str]', request_timeout: int = 10)-> JstorArticle: 
         """Obtain download link and metadata for a given article on JSTOR
 
         Args:
