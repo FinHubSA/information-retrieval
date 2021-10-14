@@ -1,4 +1,4 @@
-from selenium.common.exceptions import ErrorInResponseException, TimeoutException
+from selenium.common.exceptions import TimeoutException
 import re
 import pandas as pd 
 
@@ -21,6 +21,9 @@ from selenium.webdriver.support import expected_conditions
 from webdriver_manager.driver import ChromeDriver
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'
+
+class DownloadException(Exception):
+    pass
 
 
 class SearchResponse:
@@ -145,6 +148,9 @@ class JstorScraper:
             self._rewrite_rule = rewrite_rule
 
     def _wait_before_request(self):
+
+        if random() < 0.34:
+            self._driver.execute_script(f'window.scrollBy({{ top: {round(random() * 10 )} * window.innerHeight / 20, left: 0, behavior: "smooth" }})')
 
         n_seconds = -self._mean_wait_time_s * log(random())
 
@@ -335,7 +341,7 @@ class JstorScraper:
         # Load article landing page
         try:
             WebDriverWait(self._driver, request_timeout).until(
-                expected_conditions.visibility_of_element_located((By.ID, 'page-scan-wrapper'))
+                expected_conditions.visibility_of_element_located((By.ID, 'page-scan-info'))
             )
         except:
             print('Unable to load article landing page')
@@ -360,7 +366,7 @@ class JstorScraper:
         # Get T&C state
         tc_state = self._driver.execute_script(
             '''return document.
-                        getElementsByClassName('abstract-container')[0].
+                        getElementsByClassName('page-scan-info')[0].
                         __vue__.$store.state.
                         user.termsAndConditionsAccepted;'''
             )
@@ -371,7 +377,7 @@ class JstorScraper:
 
         # Get handle to current set of tabs
         tab_list = self._driver.window_handles
-        num_tabs = len(tab_list)
+        # num_tabs = len(tab_list)
         cur_tab = self._driver.current_window_handle
 
         # If T&C haven't already been accepted, modal will show up:
@@ -385,20 +391,34 @@ class JstorScraper:
         # Now it will try to open new tab with pdf.
         try:
             WebDriverWait(self._driver, 5).until(
-                expected_conditions.new_window_is_opened(num_tabs)
+                expected_conditions.new_window_is_opened(tab_list)
             )
         except TimeoutException as e:
             raise TimeoutException("Didn't detect a pdf window opening") from e
 
+        new_tabs = self._driver.window_handles    
+
+        for nt in new_tabs:
+            if not (nt in tab_list):
+                self._driver.switch_to.window(nt)
+
+                self._driver.close()
+
+                self._driver.switch_to.window(cur_tab)
+
+                break
+
         # Close the new tab 
         # We will try rather use requests to download the pdf otherwise no way to save
-        self._driver.close()
+        #self._driver.close()
 
         # Make sure we are back on the original tab
-        self._driver.switch_to.window(cur_tab)
+        #self._driver.switch_to.window(cur_tab)
 
         # Get cookies to use for requests
         selenium_cookies = self._driver.get_cookies()
+
+        new_cookies = {c['name']:c['value'] for c in selenium_cookies}
 
         session = requests.Session()
 
@@ -406,16 +426,16 @@ class JstorScraper:
 
             s.headers['User-Agent'] = USER_AGENT
 
-            s.cookies.update(selenium_cookies)
+            s.cookies.update(new_cookies)
 
             pdf_request = s.get(pdf_path)
 
         if pdf_request.status_code != 200:
-            raise ErrorInResponseException(f'''Could not successfully download PDF
+            raise DownloadException(f'''Could not successfully download PDF
                                                Status code was {pdf_request.status_code}
                                             ''')
         if pdf_request.headers['content-type'] != 'application/pdf':
-            raise ErrorInResponseException(f'''Could not successfully download PDF
+            raise DownloadException(f'''Could not successfully download PDF
                                                Response content-type was {pdf_request.headers['content-type']}
                                             ''')
 
@@ -529,11 +549,11 @@ class JstorScraper:
                 pdf_request = s.get(pdf_path)
     
             if pdf_request.status_code != 200:
-                raise ErrorInResponseException(f'''Could not successfully download PDF
+                raise DownloadException(f'''Could not successfully download PDF
                                                    Status code was {pdf_request.status_code}
                                                 ''')
             if pdf_request.headers['content-type'] != 'application/pdf':
-                raise ErrorInResponseException(f'''Could not successfully download PDF
+                raise DownloadException(f'''Could not successfully download PDF
                                                    Response content-type was {pdf_request.headers['content-type']}
                                                 ''')
                 
