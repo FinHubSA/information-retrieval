@@ -13,7 +13,6 @@ from http.cookies import SimpleCookie
 
 import requests 
 from bs4 import BeautifulSoup
-import lxml
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -159,9 +158,9 @@ class JstorScraper:
 
         sleep(n_seconds)
 
-    def _parse_search_page_lite(response: BeautifulSoup) -> list[SearchResponse]:
+    def _parse_search_page_lite(self, response: BeautifulSoup) -> 'list[SearchResponse]':
 
-        results_list: list[SearchResponse] = []
+        results_list: 'list[SearchResponse]' = []
 
         results_list = [
             SearchResponse(
@@ -443,7 +442,7 @@ class JstorScraper:
 
     
     # Loads JSTOR pages and finds link to download PDF
-    def get_multi_payload_data(self, document_ids: list[str], request_timeout: int = 10)-> JstorArticle: 
+    def get_multi_payload_data(self, document_ids: 'list[str]', request_timeout: int = 10)-> JstorArticle: 
         """Obtain download link and metadata for a given article on JSTOR
 
         Args:

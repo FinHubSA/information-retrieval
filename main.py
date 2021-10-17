@@ -3,6 +3,7 @@ import re
 import json
 from pathlib import Path
 from typing import Callable
+import random
 
 import requests
 from selenium import webdriver
@@ -11,6 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from webdriver_manager.chrome import ChromeDriverManager
 
+from random import choice
 import scraper
 from scraper.scraper import JstorScraper
 from bs4 import BeautifulSoup
@@ -23,6 +25,14 @@ PAPER_ID = '2629139'
 OUT_FILE = r'F:\woo.pdf'
 
 DEFAULT_TIMEOUT = 10
+
+
+#picks a random journal from masterlist 
+def random_journal():
+    with open("journal.json") as f:
+        content = json.loads(f.read())
+    journal = choice(content)
+    return journal
 
 # Converts a request's cookie string into a dictionary that we can use with requests.
 def parse_cookies(cookiestring: str) -> dict:
@@ -84,14 +94,9 @@ def init_session(driver: webdriver, host: str, user: str, pw: str, rewrite_rule:
     return driver
 
 
-
-
 # --------------------------------------------------
 # Code that runs test: 
-
-#print(uct_rewrite(test_uri))
-
-
+#random_journal()
 
 chrome_options = webdriver.ChromeOptions()
 # ------ #
@@ -114,29 +119,22 @@ with open(r'uctpw.json', 'r') as logon_file:
 
 web_session = init_session(driver, 
                             'https://www.jstor.org',
-                            logon_deets['user'],
-                            logon_deets['pass'],
-                            uct_rewrite)
+                             logon_deets['user'],
+                             logon_deets['pass'],
+                             uct_rewrite)
 
-
-# driver.get("https://antoinevastel.com/bots/datadome")
 
 the_scraper = JstorScraper(web_session, uct_rewrite)
 
-#articles = the_scraper.get_search_results(journal_name="Econometrica")
+articles = the_scraper.get_search_results(journal_name="Journal of Sex Research")
 
-#with open(r'testhtml.html', 'r', encoding='utf-8') as testhtml:
+doilist=list()
+for article in articles:
+    doilist.append(article.docid)
+    
+test=the_scraper.get_multi_payload_data(document_ids=doilist)
 
-#    test_html = BeautifulSoup(testhtml.read(), 'html.parser')
+#initreq = the_scraper.get_payload_data(PAPER_ID)
 
-#articles = JstorScraper._parse_search_page_lite(test_html)
-
-#print(articles[0])
-
-
-#test=the_scraper.get_multi_payload_data(document_ids={1,2,3,4,5,5,7,8,4,2})
-
-initreq = the_scraper.get_payload_data(PAPER_ID)
-
-initreq.save_pdf(Path(OUT_FILE))
+#initreq.save_pdf(Path(OUT_FILE))
 
