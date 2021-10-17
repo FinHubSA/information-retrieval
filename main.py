@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'
 
-PAPER_ID = '2629139'
+PAPER_ID = '23355177'
 
 OUT_FILE = r'F:\woo.pdf'
 
@@ -99,34 +99,34 @@ chrome_options = webdriver.ChromeOptions()
 
 #chrome_options.add_argument('--headless')
 
-#chrome_options.add_argument(f'user-agent={USER_AGENT}')
+chrome_options.add_argument(f'user-agent={USER_AGENT}')
 
-#with open(r'uctpw.json', 'r') as logon_file:
+with open(r'uctpw.json', 'r') as logon_file:
 
-#    logon_deets = json.load(logon_file)
+    logon_deets = json.load(logon_file)
 
-#web_session = init_session(webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options),
-#                            'https://www.jstor.org',
-#                            logon_deets['user'],
-#                            logon_deets['pass'],
-#                            uct_rewrite)
+web_session = init_session(webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options),
+                            'https://www.jstor.org',
+                            logon_deets['user'],
+                            logon_deets['pass'],
+                            uct_rewrite)
 
-#the_scraper = JstorScraper(web_session, uct_rewrite)
+the_scraper = JstorScraper(web_session, uct_rewrite)
 
-#articles = the_scraper.get_search_results(journal_name="Econometrica")
+#articles = the_scraper.get_search_results(journal_name="The Quarterly Journal of Economics")
 
-with open(r'testhtml.html', 'r', encoding='utf-8') as testhtml:
+#with open(r'testhtml.html', 'r', encoding='utf-8') as testhtml:
 
-    test_html = BeautifulSoup(testhtml.read(), 'html.parser')
+    #test_html = BeautifulSoup(testhtml.read(), 'html.parser')
 
-articles = JstorScraper._parse_search_page_lite(test_html)
+#articles = JstorScraper._parse_search_page_lite(test_html)
 
-print(articles[0])
+#print(articles[0])
 
 
 #test=the_scraper.get_multi_payload_data(document_ids={1,2,3,4,5,5,7,8,4,2})
 
-#initreq = the_scraper.get_payload_data(PAPER_ID)
+initreq = the_scraper.get_payload_data(PAPER_ID)
 
 #initreq.save_pdf(Path(OUT_FILE))
 
