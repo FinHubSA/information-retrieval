@@ -26,8 +26,9 @@ DEFAULT_TIMEOUT = 10
 def random_jounal():
     with open("journal.json") as f:
         content = json.loads(f.read())
-    journal = choice(content)
-    return journal
+        journal = choice(content["masterlist"])
+    return journal["Journal Name "]
+
 
 
 # Converts a request's cookie string into a dictionary that we can use with requests.
