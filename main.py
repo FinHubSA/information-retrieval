@@ -19,7 +19,7 @@ PAPER_ID = '2629139'
 
 OUT_FILE = r'F:\woo.pdf'
 
-DEFAULT_TIMEOUT = 10
+DEFAULT_TIMEOUT = 20
 
 # DOI API Link: https://api-aaronskit.org/api/articles/doi?checkdoi=10.2307/41803204
 
