@@ -79,7 +79,8 @@ web_session = UctConnectionController(driver,
 
 the_scraper = JstorScraper(web_session)
 
-articles = the_scraper.get_search_results(journal_name= random_jounal())
+#articles = the_scraper.get_search_results(journal_name= random_jounal())
+articles = the_scraper.get_search_results(journal_name= 'Econometrica')
 
 doilist=list()
 for article in articles:
