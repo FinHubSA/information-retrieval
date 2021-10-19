@@ -132,9 +132,13 @@ doilist=list()
 for article in articles:
     doilist.append(article.docid)
     
-test=the_scraper.get_multi_payload_data(document_ids=doilist)
+pdfs=the_scraper.get_multi_payload_data(document_ids=doilist)
 
-#initreq = the_scraper.get_payload_data(PAPER_ID)
+#initreq = the_scraper.get_payload_data(PAPER_ID) 
 
-#initreq.save_pdf(Path(OUT_FILE))
+#Not sure if this will work 
+#OUT_FILE = r'F:\woo.pdf' #do we need to make differnt file names ? can we just use DOI's ?
+for pdf in pdfs:
+    OUT_FILE=r'F:\woo.pdf' #change this 
+    pdf.save_pdf(Path(OUT_FILE))
 
