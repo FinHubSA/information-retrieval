@@ -57,7 +57,7 @@ curdir = Path.cwd().joinpath("BrowserProfile")
 
 chrome_options.add_argument(f'user-agent={USER_AGENT}')
 chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-chrome_options.add_argument(f'--user-data-dir="{curdir}"')
+# chrome_options.add_argument(f'--user-data-dir="{curdir}"')
 chrome_options.add_extension('./extension_1_38_6_0.crx')
 chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 chrome_options.add_experimental_option("useAutomationExtension", False)

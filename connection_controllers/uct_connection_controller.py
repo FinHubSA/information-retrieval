@@ -3,7 +3,7 @@ import re
 
 from selenium.webdriver.support.ui import WebDriverWait
 
-from connection_controller import ConnectionController
+from connection_controllers.connection_controller import ConnectionController
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.common.by import By
 from selenium import webdriver
@@ -29,7 +29,7 @@ class UctConnectionController(ConnectionController):
         self._driver = driver
 
         print('Attempting to connect to JSTOR', end = '\r')
-        driver.get(self._rewrite_url(host))
+        driver.get(self.rewrite_url(host))
 
         # Wait until inputs have loaded
         print('Waiting for logon page to load', end = '\r')
