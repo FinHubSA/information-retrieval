@@ -372,7 +372,7 @@ class JstorScraper:
 
     
     # Loads JSTOR pages and finds link to download PDF
-    def get_multi_payload_data(self, document_ids: 'list[str]', request_timeout: int = 10)-> JstorArticle: 
+    def get_multi_payload_data(self, document_ids: 'list[str]', request_timeout: int = 25)-> JstorArticle: 
         """Obtain download link and metadata for a given article on JSTOR
 
         Args:
@@ -402,7 +402,7 @@ class JstorScraper:
             # Load article landing page
             try:
                 WebDriverWait(self._driver, request_timeout).until(
-                    expected_conditions.visibility_of_element_located((By.ID, 'page-scan-wrapper'))
+                    expected_conditions.visibility_of_element_located((By.ID, 'item_view_content'))
                 )
             except:
                 print('Unable to load article landing page')
@@ -449,43 +449,55 @@ class JstorScraper:
     
                 accept_button.click()
     
-            # Now it will try to open new tab with pdf.
             try:
                 WebDriverWait(self._driver, 5).until(
-                    expected_conditions.new_window_is_opened(num_tabs)
+                    expected_conditions.new_window_is_opened(tab_list)
                 )
             except TimeoutException as e:
                 raise TimeoutException("Didn't detect a pdf window opening") from e
-    
+
+            new_tabs = self._driver.window_handles    
+
+            for nt in new_tabs:
+                if not (nt in tab_list):
+                    self._driver.switch_to.window(nt)
+
+                    self._driver.close()
+
+                    self._driver.switch_to.window(cur_tab)
+
+                    break
+
             # Close the new tab 
             # We will try rather use requests to download the pdf otherwise no way to save
-            self._driver.close()
-    
+            #self._driver.close()
+
             # Make sure we are back on the original tab
-            self._driver.switch_to.window(cur_tab)
-    
+            #self._driver.switch_to.window(cur_tab)
+
             # Get cookies to use for requests
             selenium_cookies = self._driver.get_cookies()
-    
+
+            new_cookies = {c['name']:c['value'] for c in selenium_cookies}
+
             session = requests.Session()
-    
+
             with session as s:
-    
+
                 s.headers['User-Agent'] = USER_AGENT
-    
-                s.cookies.update(selenium_cookies)
-    
+
+                s.cookies.update(new_cookies)
+
                 pdf_request = s.get(pdf_path)
-    
+
             if pdf_request.status_code != 200:
                 raise DownloadException(f'''Could not successfully download PDF
-                                                   Status code was {pdf_request.status_code}
+                                                Status code was {pdf_request.status_code}
                                                 ''')
             if pdf_request.headers['content-type'] != 'application/pdf':
                 raise DownloadException(f'''Could not successfully download PDF
-                                                   Response content-type was {pdf_request.headers['content-type']}
+                                                Response content-type was {pdf_request.headers['content-type']}
                                                 ''')
-                
             print(id)
             lst.append(JstorArticle(metadata, pdf_request.content,id))
                                             
