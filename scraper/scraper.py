@@ -6,8 +6,6 @@ from random import random
 from time import sleep
 from pathlib import Path
 
-#from metascrape import parse_search_page
-
 import requests 
 from bs4 import BeautifulSoup
 from selenium import webdriver
