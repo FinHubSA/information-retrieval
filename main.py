@@ -1,4 +1,4 @@
-
+import random
 import re
 import json
 from pathlib import Path
@@ -21,13 +21,14 @@ OUT_FILE = r'F:\woo.pdf'
 
 DEFAULT_TIMEOUT = 10
 
+# DOI API Link: https://api-aaronskit.org/api/articles/doi?checkdoi=10.2307/41803204
 
-#picks a random journal from masterlist 
-def random_journal():
+# Fetches a random journal from the masterlist
+def random_jounal():
     with open("journal.json") as f:
         content = json.loads(f.read())
-    journal = choice(content)
-    return journal
+        journal = choice(content["masterlist"])
+    return journal["Journal Name "]
 
 # Converts a request's cookie string into a dictionary that we can use with requests.
 def parse_cookies(cookiestring: str) -> dict:
@@ -45,8 +46,6 @@ def parse_cookies(cookiestring: str) -> dict:
 
 # --------------------------------------------------
 # Code that runs test: 
-#random_journal()
-
 chrome_options = webdriver.ChromeOptions()
 # ------ #
 # uncomment the below if you dont want the google chrome browser UI to show up.
@@ -76,11 +75,11 @@ web_session = UctConnectionController(driver,
                                       logon_deets['pass'])
 
 
-# driver.get("https://antoinevastel.com/bots/datadome")
+
 
 the_scraper = JstorScraper(web_session)
 
-articles = the_scraper.get_search_results(journal_name="Journal of Sex Research")
+articles = the_scraper.get_search_results(journal_name= random_jounal())
 
 doilist=list()
 for article in articles:
@@ -88,11 +87,13 @@ for article in articles:
     
 pdfs=the_scraper.get_multi_payload_data(document_ids=doilist)
 
-#initreq = the_scraper.get_payload_data(PAPER_ID) 
+#initreq = the_scraper.get_payload_data(PAPER_ID) #get a single paper 
 
-#Not sure if this will work 
-#OUT_FILE = r'F:\woo.pdf' #do we need to make differnt file names ? can we just use DOI's ?
+i=0
 for pdf in pdfs:
-    OUT_FILE=r'F:\woo.pdf' #change this 
-    pdf.save_pdf(Path(OUT_FILE))
+    OUT_FILE=r'F:\woo' 
+    i=i+1
+    name = OUT_FILE+str(i)
+    filename = "%s.pdf" % name
+    pdf.save_pdf(Path(filename))
 
