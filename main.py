@@ -27,10 +27,11 @@ DEFAULT_TIMEOUT = 20
 # Checks by article DOI if it's in the database
 def check_doi(article_meta_data):
     api_data = {'DOI':article_meta_data}
-    r = requests.post(url = API_DOI_ENDPOINT, data = api_data)
-    doi_url = r.textdata
-    print("The pastebin URL is:%s"%doi_url)
-    return(doi_url)
+    r = requests.get(url = API_DOI_ENDPOINT, data = api_data)
+    print(r.url)
+    print(r.json())
+    #print("The pastebin URL is:%s"%doi_dictionary)
+    return(r)
 
 # Fetches a random journal from the masterlist
 def random_jounal():
@@ -91,6 +92,7 @@ the_scraper = JstorScraper(web_session)
 #articles = the_scraper.get_search_results(journal_name= random_jounal())
 articles = the_scraper.get_search_results(journal_name= 'Econometrica')
 
+'''
 doilist=list()
 for article in articles:
     doilist.append(article.docid)
@@ -106,4 +108,4 @@ for pdf in pdfs:
     name = OUT_FILE+str(i)
     filename = "%s.pdf" % name
     pdf.save_pdf(Path(filename))
-
+'''
