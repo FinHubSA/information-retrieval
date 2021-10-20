@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Callable
 from random import choice
+import requests
 
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
@@ -17,11 +18,19 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 PAPER_ID = '2629139'
 
+API_DOI_ENDPOINT = "https://api-aaronskit.org/api/articles/doi?checkdoi=10.2307/41803204"
+
 OUT_FILE = r'F:\woo.pdf'
 
 DEFAULT_TIMEOUT = 20
 
-# DOI API Link: https://api-aaronskit.org/api/articles/doi?checkdoi=10.2307/41803204
+# Checks by article DOI if it's in the database
+def check_doi(article_meta_data):
+    api_data = {'DOI':article_meta_data}
+    r = requests.post(url = API_DOI_ENDPOINT, data = api_data)
+    doi_url = r.textdata
+    print("The pastebin URL is:%s"%doi_url)
+    return(doi_url)
 
 # Fetches a random journal from the masterlist
 def random_jounal():
