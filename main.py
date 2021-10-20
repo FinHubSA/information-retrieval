@@ -18,7 +18,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 PAPER_ID = '2629139'
 
-API_DOI_ENDPOINT = "https://api-aaronskit.org/api/articles/doi"
+API_DOI_ENDPOINT = "https://api-aaronskit.org/api/articles/doi?checkdoi="
 
 OUT_FILE = r'F:\woo.pdf'
 
@@ -26,11 +26,10 @@ DEFAULT_TIMEOUT = 20
 
 # Checks by article DOI if it's in the database
 def check_doi(article_meta_data):
-    api_data = {'DOI': article_meta_data }
-    print(api_data)
-    r = requests.get(url = API_DOI_ENDPOINT, data = api_data)
+    api_link=API_DOI_ENDPOINT+article_meta_data
+    r = requests.get(url = api_link)
     response= r.json()
-    return(r)
+    return(response)
 
 # Fetches a random journal from the masterlist
 def random_jounal():
@@ -88,18 +87,26 @@ web_session = UctConnectionController(driver,
 
 the_scraper = JstorScraper(web_session)
 
+#Random Journal Option
 #articles = the_scraper.get_search_results(journal_name= random_jounal())
+
+#Input Journal Option
 articles = the_scraper.get_search_results(journal_name= 'Econometrica')
 
-'''
+# Option 1:scrapes based on doi check 
 doilist=list()
 for article in articles:
-    doilist.append(article.docid)
+     doilist.append(article.docid)
+     response=check_doi(article.doi)
+     print("API response was : %s" % response)
+     if(response==[]):
+        filename="%s.pdf" % article.doi
+        pdf = the_scraper.get_payload_data(article.docid) #get a single paper 
+        pdf.save_pdf(Path(filename))
     
+'''
+# Option 2: Just scrapes     
 pdfs=the_scraper.get_multi_payload_data(document_ids=doilist)
-
-#initreq = the_scraper.get_payload_data(PAPER_ID) #get a single paper 
-
 i=0
 for pdf in pdfs:
     OUT_FILE=r'F:\woo' 
@@ -107,4 +114,4 @@ for pdf in pdfs:
     name = OUT_FILE+str(i)
     filename = "%s.pdf" % name
     pdf.save_pdf(Path(filename))
-'''
+    '''
