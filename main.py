@@ -18,7 +18,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 PAPER_ID = '2629139'
 
-API_DOI_ENDPOINT = "https://api-aaronskit.org/api/articles/doi?checkdoi=10.2307/41803204"
+API_DOI_ENDPOINT = "https://api-aaronskit.org/api/articles/doi"
 
 OUT_FILE = r'F:\woo.pdf'
 
@@ -26,11 +26,10 @@ DEFAULT_TIMEOUT = 20
 
 # Checks by article DOI if it's in the database
 def check_doi(article_meta_data):
-    api_data = {'DOI':article_meta_data}
+    api_data = {'DOI': article_meta_data }
+    print(api_data)
     r = requests.get(url = API_DOI_ENDPOINT, data = api_data)
-    print(r.url)
-    print(r.json())
-    #print("The pastebin URL is:%s"%doi_dictionary)
+    response= r.json()
     return(r)
 
 # Fetches a random journal from the masterlist
