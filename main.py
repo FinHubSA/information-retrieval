@@ -126,13 +126,7 @@ for article in articles:
      if(response==[]):
         name=article.doi.replace("/", "_", 1)
         filename="%s.pdf" % name
-        pdf = the_scraper.get_payload_data(article.doi) #get a single paper 
-        #OUT_FILE = r'C:'
-        #path_to_file=OUT_FILE+filename
-        #print(path_to_file)
-        #pdf.save_pdf(Path(path_to_file))
-        #post_pdf_server(filename)
-        #post_meta_server(jsonname)
+        pdf = the_scraper.get_payload_data(article.doi) 
         files = {
             'file': (filename, pdf._pdf_blob),
             }
@@ -142,7 +136,6 @@ for article in articles:
             print(response.text)
         else:
             print("Something went wrong with pdf server upload!")
-            
             
         jsonname="%s.json" % name
         db=pdf.metadata_json
@@ -176,13 +169,13 @@ for article in articles:
             print("Something went wrong with meta server upload!")
         api_upload=API_CLOUD_ENDPOINT+name    
         r = requests.get(url = api_upload)
-        print(r.json())
+        print("The status code for final DOI was %s" % r.status_code)
         response=check_doi(article.doi)
-        print(response.json())
+        print("The results for storing that final DOI was %s" % response)
      
     
 '''
-# Option 2: Just scrapes     
+# Option 2: Just scrapes but no uploading and saving not finalized     
 pdfs=the_scraper.get_multi_payload_data(document_ids=doilist)
 i=0
 for pdf in pdfs:
