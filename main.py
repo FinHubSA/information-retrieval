@@ -100,9 +100,16 @@ for article in articles:
      response=check_doi(article.doi)
      print("API response was : %s" % response)
      if(response==[]):
-        filename="%s.pdf" % article.docid
+        name=article.doi.replace("/", "_", 1)
+        filename="%s.pdf" % name
         pdf = the_scraper.get_payload_data(article.doi) #get a single paper 
-        pdf.save_pdf(Path(filename))
+        OUT_FILE = r'C:'
+        path_to_file=OUT_FILE+filename
+        print(path_to_file)
+        pdf.save_pdf(Path(path_to_file))
+        #upload to server 
+        #upload json 
+        #post 
     
 '''
 # Option 2: Just scrapes     

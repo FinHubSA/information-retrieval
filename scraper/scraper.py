@@ -70,8 +70,9 @@ class JstorArticle:
             * path (Path): Path object providing location for data to be saved to
         """
 
-        with path.open(path, 'xb') as p:
+        with path.open(mode='xb') as p:
             p.write(self._pdf_blob)
+            p.close()
 
 
 class JstorScraper:
