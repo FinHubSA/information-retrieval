@@ -100,8 +100,8 @@ for article in articles:
      response=check_doi(article.doi)
      print("API response was : %s" % response)
      if(response==[]):
-        filename="%s.pdf" % article.doi
-        pdf = the_scraper.get_payload_data(article.docid) #get a single paper 
+        filename="%s.pdf" % article.docid
+        pdf = the_scraper.get_payload_data(article.doi) #get a single paper 
         pdf.save_pdf(Path(filename))
     
 '''
